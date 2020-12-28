@@ -1,0 +1,2 @@
+s#<url>.*</url>#<url>jdbc:mysql://mysql:3306/wso2is?allowPublicKeyRetrieval=true\&amp;useSSL=false</url>#
+s#<driverClassName>org.h2.Driver</driverClassName>#<driverClassName>com.mysql.jdbc.Driver</driverClassName>#

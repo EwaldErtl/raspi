@@ -1,0 +1,71 @@
+version: '3'
+services:
+
+  mysql: 
+    # create database wso2is on mysql 
+    # execute the mysql scripts for wso2is 
+    # grant all privileges on wso2is.* to wso2carbon@'%' with grant option
+    container_name: mysql
+    image: mysql/mysql-server:8.0.22
+    restart: always
+    hostname: mysql
+    ports:
+      - "3306:3306"
+    environment: 
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_USER: wso2carbon
+      MYSQL_PASSWORD: wso2carbon
+    volumes:
+      - "$HOME/dev/meed/volumes/mysqldata:/var/lib/mysql"
+    networks:
+      - axxd-net
+
+  zookeeper:
+    container_name: zookeeper
+    image: zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+      - "9090:8080"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - axxd-net
+  kafka:
+    container_name: kafka
+    #image: fogsyio/kafka:2.2.0
+    image: cfei/kafka:latest-multiarch
+    hostname: kafka
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "19092:19092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,OUTSIDE://${DOCKER_HOST_IP:-127.0.0.1}:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://kafka:9092,OUTSIDE://${DOCKER_HOST_IP:-127.0.0.1}:19092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - axxd-net
+
+  wso2is:
+    build:
+      context: ./wso2
+      dockerfile: Dockerfile.wso2is
+    container_name: wso2is
+    hostname: wso2is
+    ports: 
+      - "9448:9443"
+    networks: 
+      - axxd-net
+
+networks:
+  axxd-net:
+    driver: bridge
+

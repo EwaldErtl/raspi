@@ -1,0 +1,41 @@
+FROM wso2/wso2is:5.7.0 as wso2_stage
+
+FROM adoptopenjdk:8u275-b01-jdk-hotspot-focal
+
+ARG WSO2_SERVER_HOME=/home/wso2carbon/wso2is-5.7.0
+ARG DATASOURCE=$WSO2_SERVER_HOME/repository/conf/datasources/master-datasources.xml
+
+ARG USER=wso2carbon
+ARG USER_ID=802
+ARG USER_GROUP=wso2
+ARG USER_GROUP_ID=802
+ARG USER_HOME=/home/${USER}
+
+
+RUN \
+    groupadd --system -g ${USER_GROUP_ID} ${USER_GROUP} \
+    && useradd --system --create-home --home-dir ${USER_HOME} --no-log-init -g ${USER_GROUP_ID} -u ${USER_ID} ${USER} 
+
+COPY --from=wso2_stage --chown=wso2carbon:wso2 /home/wso2carbon /home/wso2carbon
+
+#ADD mysql-connector-java-8.0.21.jar $WSO2_SERVER_HOME/
+ADD patch-datasource.sed $WSO2_SERVER_HOME
+ADD mysql-connector-java-8.0.21.jar $WSO2_SERVER_HOME/repository/components/dropins
+RUN rm -f /home/wso2carbon/wso2is-5.7.0/repository/components/dropins/mysql_connector_java_5.1.45_bin_1.0.0.jar
+RUN sed -f $WSO2_SERVER_HOME/patch-datasource.sed -i $DATASOURCE; sed -i -e 's/5,30/5,70/' $WSO2_SERVER_HOME/repository/conf/user-mgt.xml
+
+
+# set the user and work directory
+USER ${USER_ID}
+WORKDIR ${USER_HOME}
+
+# set environment variables
+ENV JAVA_OPTS="-Djava.util.prefs.systemRoot=${USER_HOME}/.java -Djava.util.prefs.userRoot=${USER_HOME}/.java/.userPrefs" \
+    WORKING_DIRECTORY=${USER_HOME} \
+    WSO2_SERVER_HOME=${WSO2_SERVER_HOME}
+
+# expose ports
+EXPOSE 4000 9763 9443
+
+# initiate container and start WSO2 Carbon server
+ENTRYPOINT ["/home/wso2carbon/init.sh"]
