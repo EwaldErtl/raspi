@@ -19,10 +19,11 @@ RUN \
 COPY --from=wso2_stage --chown=wso2carbon:wso2 /home/wso2carbon /home/wso2carbon
 
 #ADD mysql-connector-java-8.0.21.jar $WSO2_SERVER_HOME/
-ADD patch-datasource.sed $WSO2_SERVER_HOME
-ADD mysql-connector-java-8.0.21.jar $WSO2_SERVER_HOME/repository/components/dropins
-RUN rm -f /home/wso2carbon/wso2is-5.7.0/repository/components/dropins/mysql_connector_java_5.1.45_bin_1.0.0.jar
-RUN sed -f $WSO2_SERVER_HOME/patch-datasource.sed -i $DATASOURCE; sed -i -e 's/5,30/5,70/' $WSO2_SERVER_HOME/repository/conf/user-mgt.xml
+#ADD patch-datasource.sed $WSO2_SERVER_HOME
+#ADD mysql-connector-java-8.0.21.jar $WSO2_SERVER_HOME/repository/components/dropins
+#RUN rm -f /home/wso2carbon/wso2is-5.7.0/repository/components/dropins/mysql_connector_java_5.1.45_bin_1.0.0.jar
+#RUN sed -f $WSO2_SERVER_HOME/patch-datasource.sed -i $DATASOURCE
+RUN sed -i -e 's/5,30/5,70/' $WSO2_SERVER_HOME/repository/conf/user-mgt.xml
 
 
 # set the user and work directory
